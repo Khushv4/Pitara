@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+ 
+  --pitara-beige: #F9F8F6;
+}
+
+
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  font-family: Inter, sans-serif;
+  background: var(--pitara-beige);
+  color: #243024;
+}
+
+button {
+  cursor: pointer;
+}
