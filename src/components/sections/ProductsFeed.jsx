@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ProductCard from "../product/ProductCard";
 import SearchBar from "../product/SearchBar";
 import CategoryFilter from "../product/CategoryFilter";
+import AestheticLoader from "../../components/ui/AestheticLoader"; // IMPORTED THE LOADER
 import { supabase } from "../../lib/supabase";
 
 function ProductsFeed() {
@@ -73,15 +74,15 @@ function ProductsFeed() {
 
         {/* GRID */}
         {loading ? (
-          <div className="text-center py-20 text-[#3E2723]/60 font-sans tracking-widest uppercase text-sm">
-            Loading Catalog...
-          </div>
+          
+          /* REPLACED PLAIN TEXT WITH AESTHETIC LOADER */
+          <AestheticLoader message="Curating the collection..." />
+          
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-32 border border-[#EAE3D5] rounded-none">
-            <h3 className="text-lg font-sans uppercase tracking-widest text-[#3E2723]">Comming Soon!</h3>
+            <h3 className="text-lg font-sans uppercase tracking-widest text-[#3E2723]">Coming Soon!</h3>
           </div>
         ) : (
-          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />

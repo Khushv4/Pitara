@@ -33,6 +33,9 @@ function ProductForm({ onSubmit, categories = [] }) {
   const [featured, setFeatured] = useState(false);
   const [active, setActive] = useState(true);
   const [images, setImages] = useState([]);
+  
+  // ADDED: Loading state
+  const [loading, setLoading] = useState(false);
 
   // Handle Drag and Drop
   const handleDragEnd = (event) => {
@@ -48,23 +51,53 @@ function ProductForm({ onSubmit, categories = [] }) {
 
   const removeImage = (index) => setImages(images.filter((_, i) => i !== index));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    if (images.length < 3 || images.length > 5) {
-      alert("Upload minimum 3 and maximum 5 images");
+    
+    // Validation runs before loading starts
+    if (images.length > 5) {
+      alert(" maximum 5 images");
       return;
     }
+    
     const selectedCat = categories.find((c) => c.id.toString() === categoryId);
-    onSubmit({
-      title, description,
-      category_id: selectedCat.id,
-      category_name: selectedCat.name,
-      category_slug: selectedCat.slug,
-      price: showPrice ? Number(price) : null,
-      show_price: showPrice,
-      starting_price: !showPrice && startingPrice ? Number(startingPrice) : null,
-      featured, active, images,
-    });
+    
+    try {
+      // START LOADING
+      setLoading(true);
+
+      // Wait for the parent to finish saving the product
+      await onSubmit({
+        title, 
+        description,
+        category_id: selectedCat.id,
+        category_name: selectedCat.name,
+        category_slug: selectedCat.slug,
+        price: showPrice ? Number(price) : null,
+        show_price: showPrice,
+        starting_price: !showPrice && startingPrice ? Number(startingPrice) : null,
+        featured, 
+        active, 
+        images,
+      });
+
+      // CLEAR THE FORM on success
+      setTitle("");
+      setDescription("");
+      setCategoryId("");
+      setPrice("");
+      setShowPrice(true);
+      setStartingPrice("");
+      setFeatured(false);
+      setActive(true);
+      setImages([]);
+
+    } catch (error) {
+      console.error("Failed to save product:", error);
+    } finally {
+      // STOP LOADING regardless of success or failure
+      setLoading(false);
+    }
   };
 
   return (
@@ -112,7 +145,7 @@ function ProductForm({ onSubmit, categories = [] }) {
 
       {/* Drag & Drop Image Upload */}
       <div>
-        <label className="block mb-3 font-medium">Product Images (3–5 required. Drag to reorder)</label>
+        <label className="block mb-3 font-medium">Product Images (Maximum 5 images. Drag to reorder)</label>
         <input type="file" multiple accept="image/*" onChange={(e) => setImages([...e.target.files])} className="mb-4 block" />
         
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -126,8 +159,13 @@ function ProductForm({ onSubmit, categories = [] }) {
         </DndContext>
       </div>
 
-      <button type="submit" className="bg-[#1A531A] text-white px-8 py-3 rounded-xl hover:opacity-90 transition">
-        Save Product
+      {/* CHANGED: Button disables and changes text while loading */}
+      <button 
+        type="submit" 
+        disabled={loading}
+        className="bg-[#1A531A] text-white px-8 py-3 rounded-xl hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+      >
+        {loading ? "Saving..." : "Save Product"}
       </button>
     </form>
   );

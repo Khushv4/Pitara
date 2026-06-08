@@ -4,13 +4,14 @@ import { supabase } from "../../lib/supabase";
 import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { useCart } from "../../context/CartContext";
+// 1. IMPORT CHEVRONS FOR ARROWS
+import { ChevronLeft, ChevronRight } from "lucide-react"; 
 
 function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
   
-  // Bring in the cart actions
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -36,16 +37,23 @@ function ProductDetails() {
 
   const displayPrice = product.price ? `₹${product.price}` : `Starts at ₹${product.starting_price}`;
 
-  // DEFINED: The Buy Now logic
   const handleBuyNow = () => {
     const price = product.price || product.starting_price;
     const message = `Hello Pitara! I would like to buy: ${product.title} for ₹${price}.`;
     window.open(`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}?text=${message}`, "_blank");
   };
 
-  // DEFINED: The Add to Cart logic
   const handleAddToCart = () => {
     addToCart(product);
+  };
+
+  // 2. ADD LOGIC FOR ARROW CLICKS
+  const nextImage = () => {
+    setActiveImage((prev) => (prev === product.images.length - 1 ? 0 : prev + 1));
+  };
+
+  const prevImage = () => {
+    setActiveImage((prev) => (prev === 0 ? product.images.length - 1 : prev - 1));
   };
 
   return (
@@ -56,9 +64,34 @@ function ProductDetails() {
         
         {/* Left: Image Gallery */}
         <div className="flex flex-col gap-4">
-          <div className="aspect-square bg-[#EFEBE4] border border-[#EAE3D5] overflow-hidden">
+          
+          {/* 3. MAKE CONTAINER RELATIVE AND ADD ARROW BUTTONS */}
+          <div className="relative aspect-square bg-[#EFEBE4] border border-[#EAE3D5] overflow-hidden group">
             {product.images.length > 0 ? (
-              <img src={product.images[activeImage]} alt={product.title} className="w-full h-full object-cover mix-blend-darken" />
+              <>
+                <img src={product.images[activeImage]} alt={product.title} className="w-full h-full object-cover mix-blend-darken" />
+                
+                {/* Only show arrows if there is more than 1 image */}
+                {product.images.length > 1 && (
+                  <>
+                    <button 
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#3E2723] p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft size={24} />
+                    </button>
+                    
+                    <button 
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-[#3E2723] p-2 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight size={24} />
+                    </button>
+                  </>
+                )}
+              </>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">No Image Available</div>
             )}
