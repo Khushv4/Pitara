@@ -10,7 +10,7 @@ function Footer() {
         <div className="flex flex-col items-center md:items-start gap-5">
           {/* CHANGED: Replaced the text heading with your fpitara.png logo */}
           {/* Brand Logo & Tagline - Nudged up with -mt-4 md:-mt-6 */}
-<Link to="/" className="h-16 md:h-20 flex items-center transition-transform hover:scale-105 -mt-24 md:-mt-4">
+<Link to="/" className="h-16 md:h-20 flex items-center transition-transform hover:scale-105 -mt-2 md:-mt-8">
   <img 
     src="/fpitara.png" 
     alt="Pitara Logo" 
