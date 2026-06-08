@@ -78,10 +78,11 @@ function ProductsFeed() {
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-32 border border-[#EAE3D5] rounded-none">
-            <h3 className="text-lg font-sans uppercase tracking-widest text-[#3E2723]">No items found</h3>
+            <h3 className="text-lg font-sans uppercase tracking-widest text-[#3E2723]">Comming Soon!</h3>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-12">
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

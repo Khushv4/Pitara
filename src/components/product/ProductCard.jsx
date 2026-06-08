@@ -1,48 +1,60 @@
-import { useNavigate } from "react-router-dom";
-import { FaWhatsapp } from 'react-icons/fa6'; 
+import { Link } from "react-router-dom";
+import { useCart } from "../../context/CartContext";
 
 function ProductCard({ product }) {
-  const navigate = useNavigate();
+  const { addToCart } = useCart();
 
-  const handleWhatsAppClick = (e) => {
-    e.stopPropagation(); 
-    const message = `Hi! I'm interested in buying: ${product.title} (₹${product.price})`;
-    window.open(`https://wa.me/919999999999?text=${encodeURIComponent(message)}`, "_blank");
+  const handleBuyNow = (e) => {
+    e.preventDefault();
+    const price = product.price || product.starting_price;
+    const message = `Hello Pitara! I would like to buy: ${product.title} for ₹${price}.`;
+    window.open(`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}?text=${message}`, "_blank");
   };
 
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    addToCart(product);
+  };
+
+  // Determine the display price
+  const displayPrice = product.price ? `₹${product.price}` : `Starts at ₹${product.starting_price}`;
+  const coverImage = product.images && product.images.length > 0 ? product.images[0] : "/placeholder.jpg";
+
   return (
-    <article 
-      className="group cursor-pointer flex flex-col h-full"
-      onClick={() => navigate(`/product/${product.id}`)}
-    >
-      {/* IMAGE WRAPPER */}
-      <div className="relative aspect-square overflow-hidden bg-[#EFEBE4] mb-4">
-        <img
-          src={product.images?.[0] || "https://placehold.co/800x800"}
-          alt={product.title}
-          className="w-full h-full object-contain mix-blend-darken p-4 transition-transform duration-500 group-hover:scale-105"
-        />
-      </div>
+    <div className="group flex flex-col border border-[#EAE3D5] bg-white transition-all hover:border-[#3E2723]">
+      <Link to={`/product/${product.id}`} className="block flex-grow">
+        {/* Image Container */}
+        <div className="aspect-square bg-[#EFEBE4] overflow-hidden relative">
+          <img 
+            src={coverImage} 
+            alt={product.title} 
+            className="w-full h-full object-cover mix-blend-darken group-hover:scale-105 transition-transform duration-700" 
+          />
+        </div>
 
-      {/* PRODUCT DETAILS */}
-      <div className="flex flex-col text-left flex-grow">
-        <h3 className="text-base font-sans font-medium text-[#3E2723] truncate">
-          {product.title}
-        </h3>
-        
-        <p className="mt-1 font-sans font-bold text-sm text-[#3E2723] mb-4">
-          {product.show_price ? `₹${product.price}` : `₹${product.starting_price} +`}
-        </p>
+        {/* Content */}
+        <div className="p-5 flex flex-col flex-grow">
+          <h3 className="font-sans font-medium text-[#3E2723] text-lg mb-1 truncate">{product.title}</h3>
+          <p className="text-[#3E2723]/70 font-sans text-sm">{displayPrice}</p>
+        </div>
+      </Link>
 
-        {/* BUY NOW BUTTON - Kept in brand color */}
+      {/* Action Buttons */}
+      <div className="p-5 pt-0 mt-auto flex flex-col lg:flex-row gap-2">
         <button 
-          onClick={handleWhatsAppClick}
-          className="mt-auto w-full bg-[#3E2723] text-[#FAF8F5] font-sans text-xs tracking-widest uppercase font-semibold py-3 px-4 flex items-center justify-center gap-2 hover:bg-[#2C2C2C] transition-colors"
+          onClick={handleAddToCart} 
+          className="flex-1 border border-[#3E2723] text-[#3E2723] py-2.5 uppercase tracking-[0.2em] text-[10px] font-bold hover:bg-[#3E2723] hover:text-[#FAF8F5] transition-colors text-center"
         >
-          <FaWhatsapp size={16} /> BUY NOW
+          Add to Cart
+        </button>
+        <button 
+          onClick={handleBuyNow}
+          className="flex-1 bg-[#3E2723] text-[#FAF8F5] py-2.5 uppercase tracking-[0.2em] text-[10px] font-bold hover:bg-[#2C2C2C] transition-colors text-center shadow-sm"
+        >
+          Buy Now
         </button>
       </div>
-    </article>
+    </div>
   );
 }
 

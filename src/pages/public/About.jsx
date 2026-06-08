@@ -6,8 +6,8 @@ function About() {
     <main className="min-h-screen flex flex-col bg-[#FAF8F5] text-[#3E2723]">
       <Navbar />
       
-      {/* Editorial Content Section */}
-      <section className="flex-grow flex items-center justify-center py-24 md:py-32 px-8">
+      {/* CHANGED: Removed 'items-center justify-center' and swapped py for pt (top) and pb (bottom) */}
+      <section className="flex-grow pt-12 pb-24 md:pt-20 md:pb-32 px-8">
         <div className="max-w-3xl mx-auto flex flex-col gap-10">
           
           {/* Header Block */}
@@ -40,7 +40,7 @@ function About() {
           </article>
           
           {/* Action Button */}
-          <div className="pt-12">
+          <div className="pt-8">
             <a 
               href="/#browse" 
               className="inline-block border border-[#3E2723] text-[#3E2723] px-10 py-4 uppercase tracking-[0.2em] text-sm font-medium hover:bg-[#3E2723] hover:text-[#FAF8F5] transition-colors"

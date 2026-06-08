@@ -6,7 +6,7 @@ import { HelmetProvider } from "react-helmet-async";
 
 import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
-
+import { CartProvider } from "./context/CartContext.jsx";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -19,7 +19,9 @@ ReactDOM.createRoot(
       {/* ❌ REMOVED: <BrowserRouter> */}
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <CartProvider>
           <App />
+          </CartProvider>
         </AuthProvider>
       </QueryClientProvider>
       {/* ❌ REMOVED: </BrowserRouter> */}
