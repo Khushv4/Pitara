@@ -9,6 +9,8 @@ function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
+  
+  // Bring in the cart actions
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -34,10 +36,16 @@ function ProductDetails() {
 
   const displayPrice = product.price ? `₹${product.price}` : `Starts at ₹${product.starting_price}`;
 
+  // DEFINED: The Buy Now logic
   const handleBuyNow = () => {
     const price = product.price || product.starting_price;
     const message = `Hello Pitara! I would like to buy: ${product.title} for ₹${price}.`;
     window.open(`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}?text=${message}`, "_blank");
+  };
+
+  // DEFINED: The Add to Cart logic
+  const handleAddToCart = () => {
+    addToCart(product);
   };
 
   return (
@@ -85,20 +93,21 @@ function ProductDetails() {
           </div>
 
           {/* Action Buttons */}
-         <div className="p-5 pt-0 mt-auto flex flex-col xl:flex-row gap-2">
-        <button 
-          onClick={handleAddToCart} 
-          className="flex-1 whitespace-nowrap border border-[#3E2723] text-[#3E2723] py-2.5 px-2 uppercase tracking-[0.1em] text-[10px] font-bold hover:bg-[#3E2723] hover:text-[#FAF8F5] transition-colors text-center"
-        >
-          Add to Cart
-        </button>
-        <button 
-          onClick={handleBuyNow}
-          className="flex-1 whitespace-nowrap bg-[#3E2723] text-[#FAF8F5] py-2.5 px-2 uppercase tracking-[0.1em] text-[10px] font-bold hover:bg-[#2C2C2C] transition-colors text-center shadow-sm"
-        >
-          Buy Now
-        </button>
-      </div>
+          <div className="flex flex-col sm:flex-row gap-4 w-full border-t border-[#EAE3D5] pt-10">
+            <button 
+              onClick={handleAddToCart} 
+              className="flex-1 border border-[#3E2723] text-[#3E2723] py-4 uppercase tracking-[0.2em] text-xs font-bold hover:bg-[#3E2723] hover:text-[#FAF8F5] transition-colors text-center"
+            >
+              Add to Cart
+            </button>
+            <button 
+              onClick={handleBuyNow}
+              className="flex-1 bg-[#3E2723] text-[#FAF8F5] py-4 uppercase tracking-[0.2em] text-xs font-bold hover:bg-[#2C2C2C] transition-colors text-center shadow-sm"
+            >
+              Buy Now
+            </button>
+          </div>
+          
         </div>
       </main>
 
