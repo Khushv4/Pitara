@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import ProductCard from "../product/ProductCard";
+import ProductCardSkeleton from "../product/ProductCardSkeleton"; // IMPORTED THE SKELETON
 import SearchBar from "../product/SearchBar";
 import CategoryFilter from "../product/CategoryFilter";
-import AestheticLoader from "../../components/ui/AestheticLoader";
 import { supabase } from "../../lib/supabase";
+
+const ITEMS_PER_PAGE = 8; // Restricts load to 8 items at a time
 
 function ProductsFeed() {
   const [products, setProducts] = useState([]);
@@ -12,22 +14,17 @@ function ProductsFeed() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
 
-  // LAZY LOADING STATE: Start by showing 8 products
-  const [visibleCount, setVisibleCount] = useState(8);
-  
-  const observerTarget = useRef(null);
+  // PAGINATION STATE
+  const [currentPage, setCurrentPage] = useState(1);
+  const feedTopRef = useRef(null); 
 
-  // 1. SCROLL LOCK EFFECT
+  // SCROLL LOCK EFFECT
   useEffect(() => {
     if (loading) {
-      // Disable scrolling while loading
       document.body.style.overflow = "hidden";
     } else {
-      // Re-enable scrolling when done
       document.body.style.overflow = "unset";
     }
-
-    // Cleanup function in case the component unmounts mid-load
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -37,8 +34,9 @@ function ProductsFeed() {
     loadData();
   }, []);
 
+  // Reset to Page 1 if they search or change categories
   useEffect(() => {
-    setVisibleCount(8);
+    setCurrentPage(1);
   }, [search, selectedCategory]);
 
   const loadData = async () => {
@@ -73,35 +71,25 @@ function ProductsFeed() {
     return matchesSearch && matchesCategory;
   });
 
-  // INFINITE SCROLL LOGIC
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && visibleCount < filteredProducts.length) {
-          setVisibleCount((prev) => prev + 8);
-        }
-      },
-      { threshold: 0.1 }
-    );
+  // PAGINATION MATH
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const currentProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+  // PAGE CHANGE HANDLER
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    // Smoothly scroll back to the top of the feed section
+    if (feedTopRef.current) {
+      feedTopRef.current.scrollIntoView({ behavior: "smooth" });
     }
-
-    return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
-      }
-    };
-  }, [visibleCount, filteredProducts.length]);
-
-  const displayedProducts = filteredProducts.slice(0, visibleCount);
+  };
 
   return (
-    <section id="browse" className="py-20 bg-[#FAF8F5]">
+    <section id="browse" className="py-20 bg-[#FAF8F5]" ref={feedTopRef}>
       <div className="max-w-7xl mx-auto px-6">
         
-        {/* HEAVY HEADER & SEARCH ROW */}
+        {/* HEADER & SEARCH ROW */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-8 border-b-2 border-[#3E2723] pb-4">
           <div>
             <h2 className="text-5xl md:text-7xl font-sans font-black tracking-tighter text-[#3E2723] uppercase leading-none">
@@ -124,10 +112,14 @@ function ProductsFeed() {
 
         {/* GRID */}
         {loading ? (
-          // To ensure the loader stays centered on the user's screen while locked
-          <div className="min-h-[60vh] flex items-center justify-center">
-            <AestheticLoader message="Curating the collection..." />
+          
+          /* THE SKELETON GRID: Shows 8 pulsing dummy cards while Supabase fetches */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12 w-full">
+            {Array.from({ length: ITEMS_PER_PAGE }).map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))}
           </div>
+
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-32 border border-[#EAE3D5] rounded-none">
             <h3 className="text-lg font-sans uppercase tracking-widest text-[#3E2723]">Coming Soon!</h3>
@@ -135,21 +127,37 @@ function ProductsFeed() {
         ) : (
           <div className="flex flex-col items-center w-full">
             
+            {/* Display ONLY the 8 real items for the current page */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12 w-full">
-              {displayedProducts.map((product) => (
+              {currentProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
 
-            {/* THE INVISIBLE TRIPWIRE */}
-            {visibleCount < filteredProducts.length && (
-              <div 
-                ref={observerTarget} 
-                className="h-20 w-full flex items-center justify-center mt-12"
-              >
-                <span className="text-[10px] uppercase tracking-[0.3em] text-[#3E2723]/50 animate-pulse">
-                  Revealing more...
+            {/* PAGINATION CONTROLS */}
+            {totalPages > 1 && (
+              <div className="flex items-center gap-6 mt-20 border-t border-[#EAE3D5] pt-8 w-full justify-center">
+                
+                <button 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="uppercase tracking-[0.2em] text-xs font-bold text-[#3E2723] disabled:opacity-30 transition-opacity hover:opacity-100 opacity-70"
+                >
+                  Previous
+                </button>
+
+                <span className="font-serif italic text-[#3E2723]/80">
+                  {currentPage} <span className="font-sans not-italic text-xs mx-1 opacity-50">/</span> {totalPages}
                 </span>
+
+                <button 
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="uppercase tracking-[0.2em] text-xs font-bold text-[#3E2723] disabled:opacity-30 transition-opacity hover:opacity-100 opacity-70"
+                >
+                  Next
+                </button>
+
               </div>
             )}
 
