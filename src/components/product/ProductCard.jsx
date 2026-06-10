@@ -7,7 +7,7 @@ function ProductCard({ product }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const imgRef = useRef(null);
 
-  // FAILSAFE 1: If the browser already has the image cached, reveal instantly
+  // Failsafe for cached images
   useEffect(() => {
     if (imgRef.current && imgRef.current.complete) {
       setIsLoaded(true);
@@ -27,38 +27,72 @@ function ProductCard({ product }) {
   };
 
   const displayPrice = product.price ? `₹${product.price}` : `Starts at ₹${product.starting_price}`;
-  const coverImage = product.images && product.images.length > 0 ? product.images[0] : "/placeholder.jpg";
+  
+  // --- IMAGE OPTIMIZATION LOGIC ---
+  const baseImageUrl = product.images && product.images.length > 0 ? product.images[0] : "/placeholder.jpg";
+  
+  // If it's a Supabase URL, ask the server to shrink it to 500x500 WebP at 80% quality
+  const optimizedImage = baseImageUrl.includes("supabase.co") 
+    ? `${baseImageUrl}?width=500&height=500&resize=cover&quality=80&format=webp`
+    : baseImageUrl;
+
+  // --- DISCOUNT EVALUATION ---
+  const basePrice = product.price || product.starting_price;
+  const hasDiscount = Number(product.discount) > 0; 
+  const mrp = hasDiscount ? Math.round(basePrice / (1 - product.discount / 100)) : null;
 
   return (
-    <div className="group flex flex-col border border-[#EAE3D5] bg-white transition-all hover:border-[#3E2723]">
+    <div className="group flex flex-col border border-[#EAE3D5] bg-white transition-all hover:border-[#3E2723] relative">
+      
+      {/* DISCOUNT BADGE */}
+      {hasDiscount && (
+        <div className="absolute top-3 left-3 bg-[#8B0000] text-[#FAF8F5] text-[9px] font-bold px-2.5 py-1 uppercase tracking-widest z-10 shadow-sm">
+          {product.discount}% OFF
+        </div>
+      )}
+
       <Link to={`/product/${product.id}`} className="block flex-grow">
         
         {/* Image Container with Skeleton */}
         <div className="aspect-square bg-[#EFEBE4] overflow-hidden relative">
-          
-          {/* SKELETON: Pulses while downloading */}
           {!isLoaded && (
             <div className="absolute inset-0 bg-[#EAE3D5] animate-pulse"></div>
           )}
 
-          {/* ACTUAL IMAGE */}
           <img 
             ref={imgRef}
-            src={coverImage} 
+            src={optimizedImage} // <-- Now using the fast, transformed URL
             alt={product.title} 
             loading="lazy"
             onLoad={() => setIsLoaded(true)} 
-            onError={() => setIsLoaded(true)} // FAILSAFE 2: If the image link is broken, still reveal the text/buttons!
+            onError={() => setIsLoaded(true)} 
             className={`w-full h-full object-cover mix-blend-darken group-hover:scale-105 transition-all duration-700 ease-in-out ${
               isLoaded ? "opacity-100" : "opacity-0"
             }`} 
           />
         </div>
 
-        {/* Content: Fades in ONLY when image is ready or failsafes trigger */}
+        {/* Content Section */}
         <div className={`p-5 flex flex-col flex-grow transition-opacity duration-700 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
-          <h3 className="font-sans font-medium text-[#3E2723] text-lg mb-1 truncate">{product.title}</h3>
-          <p className="text-[#3E2723]/70 font-sans text-sm">{displayPrice}</p>
+          <h3 className="font-sans font-medium text-[#3E2723] text-lg mb-1 truncate">
+            {product.title}
+          </h3>
+          
+          {/* CONDITIONAL PRICING ROW */}
+          {hasDiscount ? (
+            <div className="flex items-baseline gap-2">
+              <p className="text-[#3E2723] font-serif italic text-sm">
+                {product.price ? `₹${product.price}` : `Starts at ₹${basePrice}`}
+              </p>
+              <p className="text-[#3E2723]/40 text-xs line-through font-sans">
+                ₹{mrp}
+              </p>
+            </div>
+          ) : (
+            <p className="text-[#3E2723]/70 font-sans text-sm">
+              {displayPrice}
+            </p>
+          )}
         </div>
       </Link>
 

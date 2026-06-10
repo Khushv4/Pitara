@@ -1,12 +1,12 @@
-import { useState, useEffect } from "react"; // ✅ UPDATED: Added imports
+import { useState, useEffect } from "react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import ProductForm from "../../components/admin/ProductForm";
 import { supabase } from "../../lib/supabase";
+import imageCompression from 'browser-image-compression';
 
 function AddProduct() {
-  const [categories, setCategories] = useState([]); // ✅ UPDATED: Added state
+  const [categories, setCategories] = useState([]);
 
-  // ✅ UPDATED: Fetch categories when the page loads
   useEffect(() => {
     const loadCategories = async () => {
       const { data } = await supabase.from("categories").select("*");
@@ -34,13 +34,30 @@ function AddProduct() {
       }
 
       // =========================
-      // STEP 2: Upload Images
+      // STEP 2: Compress, Convert to WebP, & Upload
       // =========================
       const imageRecords = [];
+      const compressionOptions = {
+        maxSizeMB: 0.5,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+        fileType: 'image/webp' // Forces WebP
+      };
 
       for (let i = 0; i < images.length; i++) {
-        const file = images[i];
-        const fileName = `${Date.now()}-${i}-${file.name}`;
+        let file = images[i];
+
+        console.log(`Converting ${file.name} to WebP...`);
+        try {
+          file = await imageCompression(file, compressionOptions);
+        } catch (compError) {
+          console.error("Compression failed, uploading original:", compError);
+        }
+
+        // Strip the old extension and sanitize name
+        const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+        const safeName = baseName.replace(/[^a-zA-Z0-9]/g, '-');
+        const fileName = `${Date.now()}-${i}-${safeName}.webp`;
 
         const { error: uploadError } = await supabase.storage
           .from("products")
@@ -81,7 +98,6 @@ function AddProduct() {
   return (
     <AdminLayout>
       <h1 className="text-4xl font-bold mb-8">Add Product</h1>
-      {/* ✅ UPDATED: Pass categories to the form */}
       <ProductForm onSubmit={saveProduct} categories={categories} />
     </AdminLayout>
   );
