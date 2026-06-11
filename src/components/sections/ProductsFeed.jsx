@@ -5,7 +5,7 @@ import SearchBar from "../product/SearchBar";
 import CategoryFilter from "../product/CategoryFilter";
 import { supabase } from "../../lib/supabase";
 
-const ITEMS_PER_PAGE = 8; 
+const ITEMS_PER_PAGE = 11; 
 
 function ProductsFeed() {
   // 1. STATE INITIALIZATION: Check sessionStorage first so we remember where the user left off!
