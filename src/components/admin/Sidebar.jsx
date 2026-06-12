@@ -8,6 +8,10 @@ function Sidebar() {
       path: "/admin",
     },
     {
+      name: "Orders",
+      path: "/admin/orders", // <-- Added Orders Page
+    },
+    {
       name: "Products",
       path: "/admin/products",
     },
@@ -37,8 +41,11 @@ function Sidebar() {
       border-r
       flex
       flex-col
+      print:hidden 
     "
     >
+      {/* print:hidden ensures the sidebar disappears when printing invoices */}
+      
       <div className="p-8">
         <h1
           className="

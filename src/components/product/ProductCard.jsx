@@ -3,11 +3,10 @@ import { Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 
 function ProductCard({ product }) {
-  const { addToCart } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
   const [isLoaded, setIsLoaded] = useState(false);
   const imgRef = useRef(null);
 
-  // Failsafe for cached images
   useEffect(() => {
     if (imgRef.current && imgRef.current.complete) {
       setIsLoaded(true);
@@ -16,9 +15,8 @@ function ProductCard({ product }) {
 
   const handleBuyNow = (e) => {
     e.preventDefault();
-    const price = product.price || product.starting_price;
-    const message = `Hello Pitara! I would like to buy: ${product.title} for ₹${price}.`;
-    window.open(`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}?text=${message}`, "_blank");
+    addToCart(product);
+    setIsCartOpen(true); 
   };
 
   const handleAddToCart = (e) => {
@@ -28,15 +26,11 @@ function ProductCard({ product }) {
 
   const displayPrice = product.price ? `₹${product.price}` : `Starts at ₹${product.starting_price}`;
   
-  // --- IMAGE OPTIMIZATION LOGIC ---
   const baseImageUrl = product.images && product.images.length > 0 ? product.images[0] : "/placeholder.jpg";
-  
-  // If it's a Supabase URL, ask the server to shrink it to 500x500 WebP at 80% quality
   const optimizedImage = baseImageUrl.includes("supabase.co") 
     ? `${baseImageUrl}?width=500&height=500&resize=cover&quality=80&format=webp`
     : baseImageUrl;
 
-  // --- DISCOUNT EVALUATION ---
   const basePrice = product.price || product.starting_price;
   const hasDiscount = Number(product.discount) > 0; 
   const mrp = hasDiscount ? Math.round(basePrice / (1 - product.discount / 100)) : null;
@@ -44,7 +38,6 @@ function ProductCard({ product }) {
   return (
     <div className="group flex flex-col border border-[#EAE3D5] bg-white transition-all hover:border-[#3E2723] relative">
       
-      {/* DISCOUNT BADGE */}
       {hasDiscount && (
         <div className="absolute top-3 left-3 bg-[#8B0000] text-[#FAF8F5] text-[9px] font-bold px-2.5 py-1 uppercase tracking-widest z-10 shadow-sm">
           {product.discount}% OFF
@@ -52,8 +45,6 @@ function ProductCard({ product }) {
       )}
 
       <Link to={`/product/${product.id}`} className="block flex-grow">
-        
-        {/* Image Container with Skeleton */}
         <div className="aspect-square bg-[#EFEBE4] overflow-hidden relative">
           {!isLoaded && (
             <div className="absolute inset-0 bg-[#EAE3D5] animate-pulse"></div>
@@ -61,7 +52,7 @@ function ProductCard({ product }) {
 
           <img 
             ref={imgRef}
-            src={optimizedImage} // <-- Now using the fast, transformed URL
+            src={optimizedImage}
             alt={product.title} 
             loading="lazy"
             onLoad={() => setIsLoaded(true)} 
@@ -72,13 +63,11 @@ function ProductCard({ product }) {
           />
         </div>
 
-        {/* Content Section */}
         <div className={`p-5 flex flex-col flex-grow transition-opacity duration-700 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
           <h3 className="font-sans font-medium text-[#3E2723] text-lg mb-1 truncate">
             {product.title}
           </h3>
           
-          {/* CONDITIONAL PRICING ROW */}
           {hasDiscount ? (
             <div className="flex items-baseline gap-2">
               <p className="text-[#3E2723] font-serif italic text-sm">
@@ -96,7 +85,6 @@ function ProductCard({ product }) {
         </div>
       </Link>
 
-      {/* Action Buttons */}
       <div className={`p-5 pt-0 mt-auto flex flex-col lg:flex-row gap-2 transition-opacity duration-700 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
         <button 
           onClick={handleAddToCart} 

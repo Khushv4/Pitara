@@ -50,8 +50,24 @@ export function CartProvider({ children }) {
     }, 0);
   };
 
+  // --- NEW: Function to instantly empty the cart after a successful order ---
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, updateQuantity, removeFromCart, getCartTotal, isCartOpen, setIsCartOpen }}>
+    <CartContext.Provider 
+      value={{ 
+        cartItems, 
+        addToCart, 
+        updateQuantity, 
+        removeFromCart, 
+        getCartTotal, 
+        isCartOpen, 
+        setIsCartOpen,
+        clearCart // <-- Successfully exported so CheckoutModal can trigger it!
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

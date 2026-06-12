@@ -17,7 +17,8 @@ import AddProduct from "../pages/admin/AddProduct";
 import EditProduct from "../pages/admin/EditProduct";
 // ✅ YOUR EXISTING ADMIN PAGE
 import AdminCategories from "../pages/admin/Categories"; 
-
+import Checkout from "../pages/public/Checkout"; // Import the new Checkout page
+import AdminOrders from "../pages/admin/AdminOrders";
 /* Auth */
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 
@@ -30,7 +31,11 @@ function AppRoutes() {
       <Route path="/category/:slug" element={<Category />} />
       <Route path="/categories" element={<PublicCategories />} /> {/* New Route */}
       <Route path="/about" element={<About />} />
+      {/* Add the public checkout route */}
+<Route path="/checkout" element={<Checkout />} />
 
+{/* Add the admin orders route alongside AddProduct / EditProduct */}
+<Route path="/admin/orders" element={<AdminOrders />} />
       {/* ADMIN */}
       <Route path="/admin/login" element={<Login />} />
       <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
