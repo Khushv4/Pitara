@@ -5,12 +5,14 @@ import Navbar from "../../components/layout/Navbar";
 import Footer from "../../components/layout/Footer";
 import { useCart } from "../../context/CartContext";
 import { ChevronLeft, ChevronRight, Share2, AlertCircle } from "lucide-react"; 
+import CheckoutModal from "../../components/cart/CheckoutModal"; 
 
 function ProductDetails() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(0);
   
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -25,7 +27,7 @@ function ProductDetails() {
         const formattedProduct = {
           ...data,
           images: data.product_images?.map((img) => img.image_url) || [],
-          stock: data.stock_quantity || 0, // <-- Pulled directly from your new DB column
+          stock: data.stock_quantity || 0,
         };
         setProduct(formattedProduct);
       }
@@ -63,15 +65,12 @@ function ProductDetails() {
 
   const displayPrice = product.price ? `₹${product.price}` : `Starts at ₹${product.starting_price}`;
   
-  // Inventory Status Variables
   const isOutOfStock = product.stock <= 0;
   const isLowStock = product.stock > 0 && product.stock <= 3;
 
   const handleBuyNow = () => {
     if (isOutOfStock) return;
-    const price = product.price || product.starting_price;
-    const message = `Hello Pitara! I would like to buy: ${product.title} for ₹${price}.`;
-    window.open(`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}?text=${message}`, "_blank");
+    setIsCheckoutOpen(true); 
   };
 
   const handleAddToCart = () => {
@@ -146,7 +145,7 @@ function ProductDetails() {
           </h1>
           <p className="text-2xl font-serif italic text-[#3E2723] mb-6">{displayPrice}</p>
 
-          {/* --- NEW: DYNAMIC INVENTORY BANNER --- */}
+          {/* DYNAMIC INVENTORY BANNER */}
           {isOutOfStock ? (
             <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 px-4 py-2 border border-red-100 w-max mb-6">
               <AlertCircle size={16} />
@@ -158,14 +157,14 @@ function ProductDetails() {
               <span className="text-xs font-black uppercase tracking-widest">Selling Fast - Only {product.stock} Left!</span>
             </div>
           ) : (
-            <div className="mb-6"></div> // Spacer to keep layout balanced if in stock
+            <div className="mb-6"></div>
           )}
 
           <div className="prose prose-sm text-[#3E2723]/80 font-light leading-relaxed mb-10">
             <p>{product.description}</p>
           </div>
 
-          {/* Action Buttons with Dynamic Disabling */}
+          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 w-full border-t border-[#EAE3D5] pt-10">
             <button 
               onClick={handleAddToCart} 
@@ -195,6 +194,12 @@ function ProductDetails() {
       </main>
 
       <Footer />
+
+      <CheckoutModal 
+        isOpen={isCheckoutOpen} 
+        onClose={() => setIsCheckoutOpen(false)} 
+        buyNowItem={product} 
+      />
     </div>
   );
 }
