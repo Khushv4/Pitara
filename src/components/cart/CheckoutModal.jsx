@@ -14,11 +14,10 @@ function CheckoutModal({ isOpen, onClose, buyNowItem = null }) {
 
   if (!isOpen) return null;
 
-  // 👇 SMART LOGIC: Decide if we are checking out the cart OR a single item
+  // SMART LOGIC: Decide if we are checking out the cart OR a single item
   const checkoutItems = buyNowItem ? [{ ...buyNowItem, quantity: 1 }] : cartItems;
   const checkoutTotal = buyNowItem ? (buyNowItem.price || buyNowItem.starting_price) : getCartTotal();
 
-  // If there are literally no items (cart is empty AND no buy now item), block them.
   if (!checkoutItems || checkoutItems.length === 0) {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
@@ -36,33 +35,32 @@ function CheckoutModal({ isOpen, onClose, buyNowItem = null }) {
     setLoading(true);
 
     try {
-      // 1. Create the Order in the database
+      // 1. Format the items for the database
+      const formattedOrderItems = checkoutItems.map(item => ({
+        product_id: item.id,
+        title: item.title,
+        price: item.price || item.starting_price,
+        quantity: item.quantity
+      }));
+
+      // 2. Save Order to Database
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .insert([{
           customer_name: formData.name,
           customer_phone: formData.phone,
           shipping_address: formData.address,
-          total_price: checkoutTotal, // Uses the smart total
-          status: "Pending" 
+          total_price: checkoutTotal, 
+          status: "Pending",
+          order_items: formattedOrderItems 
         }])
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // 2. Loop through Items (Either the 1 item, or the whole cart)
+      // 3. Deduct Inventory
       for (const item of checkoutItems) {
-        
-        await supabase.from("order_items").insert([{
-          order_id: orderData.id,
-          product_id: item.id,
-          title: item.title,
-          price: item.price || item.starting_price,
-          quantity: item.quantity
-        }]);
-
-        // Deduct Inventory
         const { data: productData } = await supabase
           .from("products")
           .select("stock_quantity")
@@ -71,7 +69,6 @@ function CheckoutModal({ isOpen, onClose, buyNowItem = null }) {
 
         if (productData) {
           const newStock = Math.max(0, productData.stock_quantity - item.quantity); 
-          
           await supabase
             .from("products")
             .update({ stock_quantity: newStock })
@@ -79,15 +76,18 @@ function CheckoutModal({ isOpen, onClose, buyNowItem = null }) {
         }
       }
 
-      // 3. Generate the WhatsApp Message
-      const orderIdShort = orderData.id.slice(0, 8).toUpperCase();
-      let message = `Hello Pitara! I have placed an order (INV-${orderIdShort}).\n\n*My Details:*\nName: ${formData.name}\nPhone: ${formData.phone}\n\n*Total Amount:* ₹${checkoutTotal}\n\nPlease confirm my order!`;
+      // 4. GENERATE THE NEW WHATSAPP MESSAGE (No Links)
+      const itemsList = checkoutItems.map(item => 
+        `▪ ${item.quantity}x ${item.title}`
+      ).join('\n');
+
+      let message = `Hello Pitara! I would like to place an order.\n\n*Customer Details:*\nName: ${formData.name}\nPhone: ${formData.phone}\n\n*Order Items:*\n${itemsList}\n\n*Grand Total:* ₹${checkoutTotal}`;
       
       window.open(`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank");
 
-      // 4. Clean up the UI
+      // 5. Clean up UI
       if (!buyNowItem) {
-        clearCart(); // ONLY empty the cart if this was a cart checkout!
+        clearCart(); 
       }
       setIsCartOpen(false); 
       onClose(); 
